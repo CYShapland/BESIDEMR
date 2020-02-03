@@ -35,25 +35,6 @@ BMA_MRanalysis(
 
 \item{N_Iter}{Number of iterations}
 
-\item{Prior}{Hyper parameter for the prior distribution;
-- For 1 parameter model
-   1. $hyper_Beta_mean and $hyper_Beta_sd to specify mean and standard deviation for
-        the normally distributed beta
-   2. $hyper_Prec_shape and $hyper_Prec_rate to specify shape and rate for
-        the gamma distribution of precision ("Full_Bayes" ONLY)
-   3. $Ins_prob assign prior inclusion probability for each instrument
-- For 2 parameter model
-   1. $hyper_Beta1_mean and $hyper_Beta1_sd to specify mean and standard deviation for the normally
-        distributed beta1
-   2. $hyper_Beta2_mean and $hyper_Beta2_sd to specify mean and standard deviation for the normally
-        distributed beta2
-   3. $hyper_Prec1_shape and $hyper_Prec1_rate to specify shape and rate for the gamma distribution
-        of precision ("Full_Bayes" ONLY)
-   4. $hyper_Prec2_shape and $hyper_Prec2_rate to specify shape and rate for the gamma distribution
-        of precision ("Full_Bayes" ONLY)
-   5. $Ins1_prob assign prior inclusion probability for each instrument in set 1
-   6. $Ins2_prob assign prior inclusion probability for each instrument in set 2}
-
 \item{tuning_para}{Tuning parameter to ensure sufficient acceptance rate (recommended between 0.25 - 0.45)
 - For 1 parameter model
    1. $Beta for beta

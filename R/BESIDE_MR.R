@@ -10,7 +10,9 @@
 #' @param seBetaYG Standard error for Y-G association
 #' @param N_Ins Number of genetic instruments
 #' @param N_Iter Number of iterations
-#' @param Prior Hyper parameter for the prior distribution;
+#' @param Prior A list of hyper parameter for the prior distribution;\describe{
+#' \item{\code{$hyper_Beta_mean, $hyper_Beta_mean}}$hyper_Beta_sd}{to specify mean and standard deviation for
+#'                         the normally distributed beta}}
 #'                 - For 1 parameter model
 #'                    1. $hyper_Beta_mean and $hyper_Beta_sd to specify mean and standard deviation for
 #'                         the normally distributed beta
@@ -28,6 +30,7 @@
 #'                         of precision ("Full_Bayes" ONLY)
 #'                    5. $Ins1_prob assign prior inclusion probability for each instrument in set 1
 #'                    6. $Ins2_prob assign prior inclusion probability for each instrument in set 2
+#'
 #' @param tuning_para Tuning parameter to ensure sufficient acceptance rate (recommended between 0.25 - 0.45)
 #'                 - For 1 parameter model
 #'                    1. $Beta for beta
