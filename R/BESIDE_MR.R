@@ -1,53 +1,46 @@
-#------------------------------------------------------------------------------------------------
-# Two sample MR: Bayesian model averaging with profile likelihood
-# Author:        Chin Yang Shapland
-# Last updated:  05/11/2019
-#-------------------------------------------------------------------------------------------------
-
-### BMA_MRanalysis() ###
-
-#User specified options
-#NOTE: beta is the estimated causal effect and tau is the heterogeneity variance modelled as precision (i.e. 1/tau)
-#
-#"tau_estimate" Use DL estimate (="DL_approx") or Full Bayesian (="Full_Bayes") approach to analyse data
-#"N_Beta"       1 parameter (=1) or 2 parameter (=2) model
-#"BetaXG"       Effect size for X-G association
-#"BetaXG"       Effect size for Y-G association
-#"seBetaXG"     Standard error for X-G association
-#"seBetaYG"     Standard error for Y-G association
-#"N_Ins"        Number of genetic instruments
-#"N_Iter"       Number of iterations
-#"Prior"        Hyper parameter for the prior distribution;
-#                 - For 1 parameter model
-#                    1. $hyper_Beta_mean and $hyper_Beta_sd to specify mean and standard deviation for
-#                         the normally distributed beta
-#                    2. $hyper_Prec_shape and $hyper_Prec_rate to specify shape and rate for
-#                         the gamma distribution of precision ("Full_Bayes" ONLY)
-#                    3. $Ins_prob assign prior inclusion probability for each instrument
-#                 - For 2 parameter model
-#                    1. $hyper_Beta1_mean and $hyper_Beta1_sd to specify mean and standard deviation for the normally
-#                         distributed beta1
-#                    2. $hyper_Beta2_mean and $hyper_Beta2_sd to specify mean and standard deviation for the normally
-#                         distributed beta2
-#                    3. $hyper_Prec1_shape and $hyper_Prec1_rate to specify shape and rate for the gamma distribution
-#                         of precision ("Full_Bayes" ONLY)
-#                    4. $hyper_Prec2_shape and $hyper_Prec2_rate to specify shape and rate for the gamma distribution
-#                         of precision ("Full_Bayes" ONLY)
-#                    5. $Ins1_prob assign prior inclusion probability for each instrument in set 1
-#                    6. $Ins2_prob assign prior inclusion probability for each instrument in set 2
-#"tuning_para"  Tuning parameter to ensure sufficient acceptance rate (recommended between 0.25 - 0.45)
-#                 - For 1 parameter model
-#                    1. $Beta for beta
-#                    2. $Prec_LL, $Prec_UL and $Prec_gap for the upper, lower and gap for the precision respectively,
-#                         this ensures symmetry between the new and the old value ("Full_Bayes" ONLY)
-#                 - For 2 parameter model
-#                    1. $Beta1 for beta1
-#                    2. $Beta2 for beta2
-#                    3. $Prec1_LL, $Prec1_UL and $Prec1_gap for the upper, lower and gap for the precision1 respectively,
-#                         ("Full_Bayes" ONLY)
-#                    4. $Prec2_LL, $Prec2_UL and $Prec2_gap for the upper, lower and gap for the precision2 respectively,
-#                         ("Full_Bayes" ONLY)
-#"gen_inits"    Initial values to start the iterations
+#' BESIDE-MR fitting function
+#'
+#' Fits BESIDE-MR model. NOTE: beta is the estimated causal effect and tau is the heterogeneity variance modelled as precision (i.e. 1/tau)
+#'
+#' @param tau_estimate Use DL estimate (="DL_approx") or Full Bayesian (="Full_Bayes") approach to analyse data.
+#' @param N_Beta 1 parameter (=1) or 2 parameter (=2) model.
+#' @param BetaXG Effect size for X-G association
+#' @param BetaYG Effect size for Y-G association
+#' @param seBetaXG Standard error for X-G association
+#' @param seBetaYG Standard error for Y-G association
+#' @param N_Ins Number of genetic instruments
+#' @param N_Iter Number of iterations
+#' @param Prior Hyper parameter for the prior distribution;
+#'                 - For 1 parameter model
+#'                    1. $hyper_Beta_mean and $hyper_Beta_sd to specify mean and standard deviation for
+#'                         the normally distributed beta
+#'                    2. $hyper_Prec_shape and $hyper_Prec_rate to specify shape and rate for
+#'                         the gamma distribution of precision ("Full_Bayes" ONLY)
+#'                    3. $Ins_prob assign prior inclusion probability for each instrument
+#'                 - For 2 parameter model
+#'                    1. $hyper_Beta1_mean and $hyper_Beta1_sd to specify mean and standard deviation for the normally
+#'                         distributed beta1
+#'                    2. $hyper_Beta2_mean and $hyper_Beta2_sd to specify mean and standard deviation for the normally
+#'                         distributed beta2
+#'                    3. $hyper_Prec1_shape and $hyper_Prec1_rate to specify shape and rate for the gamma distribution
+#'                         of precision ("Full_Bayes" ONLY)
+#'                    4. $hyper_Prec2_shape and $hyper_Prec2_rate to specify shape and rate for the gamma distribution
+#'                         of precision ("Full_Bayes" ONLY)
+#'                    5. $Ins1_prob assign prior inclusion probability for each instrument in set 1
+#'                    6. $Ins2_prob assign prior inclusion probability for each instrument in set 2
+#' @param tuning_para Tuning parameter to ensure sufficient acceptance rate (recommended between 0.25 - 0.45)
+#'                 - For 1 parameter model
+#'                    1. $Beta for beta
+#'                    2. $Prec_LL, $Prec_UL and $Prec_gap for the upper, lower and gap for the precision respectively,
+#'                         this ensures symmetry between the new and the old value ("Full_Bayes" ONLY)
+#'                 - For 2 parameter model
+#'                    1. $Beta1 for beta1
+#'                    2. $Beta2 for beta2
+#'                    3. $Prec1_LL, $Prec1_UL and $Prec1_gap for the upper, lower and gap for the precision1 respectively,
+#'                         ("Full_Bayes" ONLY)
+#'                    4. $Prec2_LL, $Prec2_UL and $Prec2_gap for the upper, lower and gap for the precision2 respectively,
+#'                         ("Full_Bayes" ONLY)
+#' @param gen_inits Initial values to start the iterations
 #                 - For 1 parameter model
 #                    1. $Beta for beta
 #                    2. $UBPrec and $LBPrec for upper and lower limit of initial value of precision respectively,
@@ -62,7 +55,31 @@
 #                         ("Full_Bayes" ONLY)
 #                    5. $Ins1_L, use randomS.initial.LI() generate random initial model space
 #                    6. $Ins2_L, use randomS.initial.LI() generate random initial model space
-
+#' @return An object of class \code{"beside"} containing the following components:\describe{
+#' \item{\code{S}}{A matrix giving the results.}
+#' \item{\code{accept_rate}}{acceptance rate.}
+#'}
+#'@author Chin Yang Shapland; Jack Bowden.
+#'@references Shapland, C.Y., et al., Profile-likelihood Bayesian model averaging for two-sample summary data Mendelian randomization in the presence of horizontal pleiotropy.
+#'@export
+#'@examples
+#'
+#' Prior choice for beta, tau and inclusion of instruments
+#' Ins_prior<-rep(0.5, L)
+#' Prior_DL<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, Ins_prob=Ins_prior)
+#' Prior_gamma<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, hyper_Prec_shape=2, hyper_Prec_rate=0.00005, Ins_prob=Ins_prior)
+#'
+#' Tuning parameter for beta
+#' H_DL<-list(Beta=0.05)
+#' H_gamma<-list(Beta=0.05, Prec_LL=0, Prec_UL=1000000, Prec_gap=150000)
+#'
+#' Generate initial values
+#' gen_inits_DL<-list(Beta=rnorm(1,0,10), Ins_L=randomS.initial.LI(rep(0,L), L,Ins_prior))
+#' gen_inits_gamma<-list(Beta=rnorm(1,0,10), UBPrec=1000000, LBPrec=0, Ins_L=randomS.initial.LI(rep(0,L), L,Ins_prior))
+#'
+#' M-H algorithm
+#' res_DL<-BMA_MRanalysis("DL_approx", data$BetaXG,data$BetaYG,data$seBetaXG,data$seBetaYG, L, nIter, Prior_DL, H_DL, gen_inits_DL)
+#' res_gamma<-BMA_MRanalysis("Full_Bayes", data$BetaXG,data$BetaYG,data$seBetaXG,data$seBetaYG, L, nIter, Prior_gamma, H_gamma, gen_inits_gamma)
 
 BMA_MRanalysis<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seBetaYG, N_Ins, N_Iter, Prior,
                          tuning_para, gen_inits){
@@ -446,6 +463,8 @@ BMA_MRanalysis<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seBetaYG, 
     }
 
     returnlist<-list(S=S, accept_rate=apply(accept, 2, mean))
+    class(returnlist)<-"beside"
+
     return(returnlist)
     }
 
@@ -469,7 +488,7 @@ randomS.initial.LI <- function(L, ins_prior) {
   return(Ind_L)
 }
 
-######################### Following functions are used by BMA_MRanalysis() ###########################################
+######################### Subfunctions that are used by BMA_MRanalysis() ###########################################
 
 ### randomS.LI() ###
 #Generate random model space that doesn't produce empty and 1 variable model space
