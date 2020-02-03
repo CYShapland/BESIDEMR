@@ -1,6 +1,6 @@
 #' BESIDE-MR fitting function
 #'
-#' Fits BESIDE-MR model. NOTE: beta is the estimated causal effect and tau is the heterogeneity variance modelled as precision (i.e. 1/tau)
+#' Fits BESIDE-MR model. NOTE: \eqn{\beta} is the estimated causal effect and \eqn{\tau} is the heterogeneity variance modelled as precision (i.e. $1/\tau$)
 #'
 #' @param tau_estimate Use DL estimate (="DL_approx") or Full Bayesian (="Full_Bayes") approach to analyse data.
 #' @param N_Beta 1 parameter (=1) or 2 parameter (=2) model.
@@ -11,53 +11,38 @@
 #' @param N_Ins Number of genetic instruments
 #' @param N_Iter Number of iterations
 #' @param Prior A list of hyper parameter for the prior distribution;\describe{
-#' \item{\code{$hyper_Beta_mean, $hyper_Beta_mean}}$hyper_Beta_sd}{to specify mean and standard deviation for
-#'                         the normally distributed beta}}
-#'                 - For 1 parameter model
-#'                    1. $hyper_Beta_mean and $hyper_Beta_sd to specify mean and standard deviation for
-#'                         the normally distributed beta
-#'                    2. $hyper_Prec_shape and $hyper_Prec_rate to specify shape and rate for
-#'                         the gamma distribution of precision ("Full_Bayes" ONLY)
-#'                    3. $Ins_prob assign prior inclusion probability for each instrument
-#'                 - For 2 parameter model
-#'                    1. $hyper_Beta1_mean and $hyper_Beta1_sd to specify mean and standard deviation for the normally
-#'                         distributed beta1
-#'                    2. $hyper_Beta2_mean and $hyper_Beta2_sd to specify mean and standard deviation for the normally
-#'                         distributed beta2
-#'                    3. $hyper_Prec1_shape and $hyper_Prec1_rate to specify shape and rate for the gamma distribution
-#'                         of precision ("Full_Bayes" ONLY)
-#'                    4. $hyper_Prec2_shape and $hyper_Prec2_rate to specify shape and rate for the gamma distribution
-#'                         of precision ("Full_Bayes" ONLY)
-#'                    5. $Ins1_prob assign prior inclusion probability for each instrument in set 1
-#'                    6. $Ins2_prob assign prior inclusion probability for each instrument in set 2
-#'
-#' @param tuning_para Tuning parameter to ensure sufficient acceptance rate (recommended between 0.25 - 0.45)
-#'                 - For 1 parameter model
-#'                    1. $Beta for beta
-#'                    2. $Prec_LL, $Prec_UL and $Prec_gap for the upper, lower and gap for the precision respectively,
-#'                         this ensures symmetry between the new and the old value ("Full_Bayes" ONLY)
-#'                 - For 2 parameter model
-#'                    1. $Beta1 for beta1
-#'                    2. $Beta2 for beta2
-#'                    3. $Prec1_LL, $Prec1_UL and $Prec1_gap for the upper, lower and gap for the precision1 respectively,
-#'                         ("Full_Bayes" ONLY)
-#'                    4. $Prec2_LL, $Prec2_UL and $Prec2_gap for the upper, lower and gap for the precision2 respectively,
-#'                         ("Full_Bayes" ONLY)
-#' @param gen_inits Initial values to start the iterations
-#                 - For 1 parameter model
-#                    1. $Beta for beta
-#                    2. $UBPrec and $LBPrec for upper and lower limit of initial value of precision respectively,
-#                         ("Full_Bayes" ONLY)
-#                    3. $Ins_L, use randomS.initial.LI() generate random initial model space
-#                 - For 2 parameter model
-#                    1. $Beta1 for beta1
-#                    2. $Beta2 for beta2
-#                    3. $UBPrec1 and $LBPrec1 for upper and lower limit of initial value of precision1 respectively,
-#                         ("Full_Bayes" ONLY)
-#                    4. $UBPrec2 and $LBPrec2 for upper and lower limit of initial value of precision2 respectively,
-#                         ("Full_Bayes" ONLY)
-#                    5. $Ins1_L, use randomS.initial.LI() generate random initial model space
-#                    6. $Ins2_L, use randomS.initial.LI() generate random initial model space
+#' \item{\code{$hyper_Beta_mean},\code{$hyper_Beta_sd}}{ONE PARAMETER MODEL: to specify mean (\code{_mean}) and
+#' standard deviation (\code{_sd}) respectively for the normally distributed \eqn{\beta}.}
+#' \item{\code{$hyper_Prec_shape}, \code{$hyper_Prec_rate}}{ONE PARAMETER MODEL with "Full_Bayes": to specify
+#' shape (\code{_shape}) and rate (\code{_rate}) for the gamma distribution of precision.}
+#' \item{\code{$Ins_prob}}{ONE PARAMETER MODEL: assign prior inclusion probability for each instrument.}
+#' \item{\code{$hyper_Beta1_mean},\code{$hyper_Beta1_sd},\code{$hyper_Beta2_mean},\code{$hyper_Beta2_sd}}{ONE PARAMETER
+#' MODEL: to specify mean and standard deviation for the normally distributed \eqn{\beta_1} and \eqn{\beta_2} respectively.}
+#' \item{\code{$hyper_Prec1_shape}, \code{$hyper_Prec1_rate}, \code{$hyper_Prec2_shape}, \code{$hyper_Prec2_rate}}{TWO
+#' PARAMETER MODEL with "Full_Bayes": to specify shape and rate for the gamma distribution of precision.}
+#' \item{\code{$Ins1_prob}, \code{$Ins2_prob}}{TWO PARAMETER MODEL: assign prior inclusion probability for each instrument in set 1 or set 2
+#' repectively.}
+#' }
+#' @param tuning_para Tuning parameter to ensure sufficient acceptance rate (recommended between 0.25 - 0.45);
+#' \describe{
+#' \item{\code{$Beta}}{ONE PARAMETER MODEL: for \eqn{\beta}.}
+#' \item{\code{$Prec_LL}, \code{$Prec_UL}, \code{$Prec_gap}}{ONE PARAMETER MODEL with "Full_Bayes": for the upper (\code{_UL}),
+#' lower (\code{_LL}) and gap (\code{_gap}) of the precision, this ensures symmetry between the new and the old value.}
+#' \item{\code{$Beta1}, \code{$Beta2}}{TWO PARAMETER MODEL: for \eqn{\beta_1} and \eqn{\beta_2} respectively.}
+#' \item{\code{$Prec1_LL}, \code{$Prec1_UL}, \code{$Prec1_gap}, \code{$Prec2_LL}, \code{$Prec2_UL}, \code{$Prec2_gap}}{TWO
+#' PARAMETER MODEL with "Full_Bayes": for the upper, lower and gap of the precision1 and precision2 respectively, this
+#' ensures symmetry between the new and the old value.}
+#' }
+#' @param gen_inits Initial values to start the iterations; \describe{
+#' \item{\code{$Beta}}{ONE PARAMETER MODEL: for \eqn{\beta}.}
+#' \item{\code{$UBPrec}, \code{$LBPrec}}{ONE PARAMETER MODEL with "Full_Bayes": for upper and lower limit of initial
+#' value of precision respectively.}
+#' \item{\code{$Ins_L}}{ONE PARAMETER MODEL: use \code{randomS.initial.LI()} to generate random initial model space.}
+#' \item{\code{$Beta1}, \code{$Beta2}}{TWO PARAMETER MODEL: for \eqn{\beta_1} and \eqn{\beta_2} respectively.}
+#' \item{\code{$UBPrec1}, \code{$LBPrec1}, \code{$UBPrec2}, \code{$LBPrec2}}{TWO
+#' PARAMETER MODEL with "Full_Bayes": or upper and lower limit of initial value of precision1 and precision2 respectively.}
+#' \item{\code{$Ins1_L1}, \code{$Ins2_L}}{TWO PARAMETER MODEL: use randomS.initial.LI() generate random initial model space.}
+#' }
 #' @return An object of class \code{"beside"} containing the following components:\describe{
 #' \item{\code{S}}{A matrix giving the results.}
 #' \item{\code{accept_rate}}{acceptance rate.}
