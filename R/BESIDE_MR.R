@@ -41,11 +41,13 @@
 #' \item{\code{$Beta1}, \code{$Beta2}}{TWO PARAMETER MODEL: for \eqn{\beta_1} and \eqn{\beta_2} respectively.}
 #' \item{\code{$UBPrec1}, \code{$LBPrec1}, \code{$UBPrec2}, \code{$LBPrec2}}{TWO
 #' PARAMETER MODEL with "Full_Bayes": or upper and lower limit of initial value of precision1 and precision2 respectively.}
-#' \item{\code{$Ins1_L1}, \code{$Ins2_L}}{TWO PARAMETER MODEL: use randomS.initial.LI() generate random initial model space.}
+#' \item{\code{$Ins1_L}, \code{$Ins2_L}}{TWO PARAMETER MODEL: use randomS.initial.LI() generate random initial model space.}
 #' }
 #' @return An object of class \code{"beside"} containing the following components:\describe{
-#' \item{\code{S}}{A matrix giving the results.}
-#' \item{\code{accept_rate}}{acceptance rate.}
+#' \item{\code{S}}{A matrix giving the results. ONE PARAMETER MODEL: columns gives sampled values of
+#' \eqn{\beta, \tau^2, I_1,...,I_L} for all iterations (rows). TWO PARAMETER MODEL: columns gives sampled values of
+#' \eqn{\beta_1, \beta_2, \tau_1^2, \tau_2^2, I_{11},...,I_{1L}, I_{21},...,I_{2L}} for all iterations (rows).}
+#' \item{\code{accept_rate}}{acceptance rate for each of the parameter from \code{S}.}
 #'}
 #'@author Chin Yang Shapland; Jack Bowden.
 #'@references Shapland, C.Y., et al., Profile-likelihood Bayesian model averaging for two-sample summary data Mendelian randomization in the presence of horizontal pleiotropy.
