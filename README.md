@@ -19,6 +19,9 @@ The main function is `BESIDE_MR` to perform BayEsian Set IDEntification Mendelia
 
 The corresponding paper can be accessed at:
 
+[Shapland, C.Y., et al., Profile-likelihood Bayesian model averaging for two-sample summary data Mendelian randomization in the presence of horizontal pleiotropy. bioRxiv, 2020](https://www.biorxiv.org/content/10.1101/2020.02.11.943712v1)
+
+
 Profile-likelihood Bayesian model averaging for two-sample summary data Mendelian randomization in the presence of horizontal pleiotropy.
 
 ## License
