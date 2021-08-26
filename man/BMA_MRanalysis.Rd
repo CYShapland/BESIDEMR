@@ -80,12 +80,12 @@ An object of class \code{"beside"} containing the following components:\describe
 }
 }
 \description{
-Fits BESIDE-MR model. NOTE: \eqn{\beta} is the estimated causal effect and \eqn{\tau} is the heterogeneity variance modelled as precision (i.e. $1/\tau$)
+Fits BESIDE-MR model. NOTE: \eqn{\beta} is the estimated causal effect and \eqn{\tau} is the heterogeneity variance modelled as precision (i.e. \eqn{1/ \tau})
 }
 \examples{
 
 #Prior choice for beta, tau and inclusion of instruments
-Ins_prior<-rep(0.5, L)
+Ins_prior<-rep(0.5, N_Ins)
 Prior_DL<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, Ins_prob=Ins_prior)
 Prior_gamma<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, hyper_Prec_shape=2, hyper_Prec_rate=0.00005, Ins_prob=Ins_prior)
 
