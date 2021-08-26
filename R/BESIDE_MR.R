@@ -55,8 +55,8 @@
 #'@examples
 #'
 #' #Prior choice for beta, tau and inclusion of instruments
-#' N_Ins<-10
-#' Ins_prior<-rep(0.5, N_Ins)
+#' L<-10
+#' Ins_prior<-rep(0.5, L)
 #' Prior_DL<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, Ins_prob=Ins_prior)
 #' Prior_gamma<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, hyper_Prec_shape=2, hyper_Prec_rate=0.00005, Ins_prob=Ins_prior)
 #'
