@@ -65,8 +65,8 @@
 #' H_gamma<-list(Beta=0.05, Prec_LL=0, Prec_UL=1000000, Prec_gap=150000)
 #'
 #' #Generate initial values
-#' gen_inits_DL<-list(Beta=rnorm(1,0,10), Ins_L=randomS.initial.LI(rep(0,L), L,Ins_prior))
-#' gen_inits_gamma<-list(Beta=rnorm(1,0,10), UBPrec=1000000, LBPrec=0, Ins_L=randomS.initial.LI(rep(0,L), L,Ins_prior))
+#' gen_inits_DL<-list(Beta=rnorm(1,0,10), Ins_L=randomS.initial.LI(L,Ins_prior))
+#' gen_inits_gamma<-list(Beta=rnorm(1,0,10), UBPrec=1000000, LBPrec=0, Ins_L=randomS.initial.LI(L,Ins_prior))
 #'
 #' #M-H algorithm
 #' res_DL<-BMA_MRanalysis("DL_approx", data$BetaXG,data$BetaYG,data$seBetaXG,data$seBetaYG, L, nIter, Prior_DL, H_DL, gen_inits_DL)
