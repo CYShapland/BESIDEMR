@@ -15,5 +15,5 @@
 #'
 #' @keywords datasets
 #'
-#'
+
 "amd.hdl"
