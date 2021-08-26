@@ -4,7 +4,7 @@ Version: 0.1
 Authors@R: c(person("Chin Yang", "Shapland", email = "chinyang.shapland@bristol.ac.uk", role = c("aut", "cre")), person("Qingyuan", "Zhao", email = "qz280@cam.ac.uk", role = "aut"), person("Jack", "Bowden", email = "J.Bowden2@exeter.ac.uk", role = "aut"))
 Description: A package to implement BayEsian Set IDEntification Mendelian randomization (BESIDE-MR).
 Depends: R (>= 3.6.0)
-License: What license is it under?
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.1
