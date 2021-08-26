@@ -1,6 +1,6 @@
 #' BESIDE-MR fitting function
 #'
-#' Fits BESIDE-MR model. NOTE: \eqn{\beta} is the estimated causal effect and \eqn{\tau} is the heterogeneity variance modelled as precision (i.e. $1/\tau$)
+#' Fits BESIDE-MR model. NOTE: \eqn{\beta} is the estimated causal effect and \eqn{\tau} is the heterogeneity variance modelled as precision (i.e. \eqn{1/ \tau})
 #'
 #' @param tau_estimate Use DL estimate (="DL_approx") or Full Bayesian (="Full_Bayes") approach to analyse data.
 #' @param N_Beta 1 parameter (=1) or 2 parameter (=2) model.
@@ -55,6 +55,7 @@
 #'@examples
 #'
 #' #Prior choice for beta, tau and inclusion of instruments
+#' N_Ins<-10
 #' Ins_prior<-rep(0.5, N_Ins)
 #' Prior_DL<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, Ins_prob=Ins_prior)
 #' Prior_gamma<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, hyper_Prec_shape=2, hyper_Prec_rate=0.00005, Ins_prob=Ins_prior)
