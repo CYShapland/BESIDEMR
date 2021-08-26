@@ -54,8 +54,11 @@
 #'@export
 #'@examples
 #'
+#' #load data
+#' data<-data(amd.hdl)
+#'
 #' #Prior choice for beta, tau and inclusion of instruments
-#' L<-10
+#' L<-nrow(METSIM_amd_F10)
 #' Ins_prior<-rep(0.5, L)
 #' Prior_DL<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, Ins_prob=Ins_prior)
 #' Prior_gamma<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, hyper_Prec_shape=2, hyper_Prec_rate=0.00005, Ins_prob=Ins_prior)
