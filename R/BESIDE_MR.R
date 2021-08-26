@@ -55,7 +55,7 @@
 #'@examples
 #'
 #' #load data
-#' data(amd.hdl)
+#' data(amd_hdl)
 #'
 #' #Prior choice for beta, tau and inclusion of instruments
 #' L<-nrow(METSIM_amd_F10)

@@ -9,11 +9,11 @@
 #'
 #' @docType data
 #'
-#' @usage data(amd.hdl)
+#' @usage data(amd_hdl)
 #'
 #' @format A \code{data.frame} with 27 rows and 4 variables.
 #'
 #' @keywords datasets
 #'
 
-"amd.hdl"
+"amd_hdl"
