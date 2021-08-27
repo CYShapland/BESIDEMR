@@ -55,7 +55,7 @@
 #'@examples
 #'
 #' #load data
-#' data<-data(AMD_HDL)
+#' #data<-data(AMD_HDL)
 #'
 #' #Prior choice for beta, tau and inclusion of instruments
 #' L<-nrow(METSIM_amd_F10)
@@ -72,8 +72,8 @@
 #' gen_inits_gamma<-list(Beta=rnorm(1,0,10), UBPrec=1000000, LBPrec=0, Ins_L=randomS.initial.LI(L,Ins_prior))
 #'
 #' #M-H algorithm
-#' res_DL<-BMA_MRanalysis("DL_approx", data$BetaXG,data$BetaYG,data$seBetaXG,data$seBetaYG, L, nIter, Prior_DL, H_DL, gen_inits_DL)
-#' res_gamma<-BMA_MRanalysis("Full_Bayes", data$BetaXG,data$BetaYG,data$seBetaXG,data$seBetaYG, L, nIter, Prior_gamma, H_gamma, gen_inits_gamma)
+#' #res_DL<-BMA_MRanalysis("DL_approx", data$BetaXG,data$BetaYG,data$seBetaXG,data$seBetaYG, L, nIter, Prior_DL, H_DL, gen_inits_DL)
+#' #res_gamma<-BMA_MRanalysis("Full_Bayes", data$BetaXG,data$BetaYG,data$seBetaXG,data$seBetaYG, L, nIter, Prior_gamma, H_gamma, gen_inits_gamma)
 
 BMA_MRanalysis<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seBetaYG, N_Ins, N_Iter, Prior,
                          tuning_para, gen_inits){
