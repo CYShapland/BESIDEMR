@@ -21,7 +21,7 @@ BMA_MRanalysis(
 \arguments{
 \item{tau_estimate}{Use DL estimate (="DL_approx") or Full Bayesian (="Full_Bayes") approach to analyse data.}
 
-\item{N_Beta}{1 parameter (=1) or 2 parameter (=2) model.}
+\item{N_Beta}{one-parameter (=1) or two-parameter (=2) model.}
 
 \item{BetaXG}{Effect size for X-G association}
 
@@ -84,26 +84,27 @@ Fits BESIDE-MR model. NOTE: \eqn{\beta} is the estimated causal effect and \eqn{
 }
 \examples{
 
-#load data
+# load data
 data(AMD_HDL)
 
-#Prior choice for beta, tau and inclusion of instruments
+# Prior choice for beta, tau and inclusion of instruments
 L<-nrow(AMD_HDL)
 Ins_prior<-rep(0.5, L)
 Prior_DL<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, Ins_prob=Ins_prior)
 Prior_gamma<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, hyper_Prec_shape=2, hyper_Prec_rate=0.00005, Ins_prob=Ins_prior)
 
-#Tuning parameter for beta
+# Tuning parameter for beta
 H_DL<-list(Beta=0.05)
 H_gamma<-list(Beta=0.05, Prec_LL=0, Prec_UL=1000000, Prec_gap=150000)
 
-#Generate initial values
+# Generate initial values
 gen_inits_DL<-list(Beta=rnorm(1,0,10), Ins_L=randomS.initial.LI(L,Ins_prior))
 gen_inits_gamma<-list(Beta=rnorm(1,0,10), UBPrec=1000000, LBPrec=0, Ins_L=randomS.initial.LI(L,Ins_prior))
 
-#M-H algorithm
-#res_DL<-BMA_MRanalysis("DL_approx", AMD_HDL$BetaXG,AMD_HDL$BetaYG,AMD_HDLseBetaXG,AMD_HDLseBetaYG, L, nIter, Prior_DL, H_DL, gen_inits_DL)
-#res_gamma<-BMA_MRanalysis("Full_Bayes", AMD_HDL$BetaXG,AMD_HDLBetaYG,AMD_HDLseBetaXG,AMD_HDLseBetaYG, L, nIter, Prior_gamma, H_gamma, gen_inits_gamma)
+# One-parameter model
+nIter<-50000
+#res_DL<-BMA_MRanalysis("DL_approx", 1, AMD_HDL$BetaXG, AMD_HDL$BetaYG, AMD_HDL$seBetaXG, AMD_HDL$seBetaYG, L, nIter, Prior_DL, H_DL, gen_inits_DL)
+#res_gamma<-BMA_MRanalysis("Full_Bayes", 1, AMD_HDL$BetaXG, AMD_HDL$BetaYG, AMD_HDL$seBetaXG, AMD_HDL$seBetaYG, L, nIter, Prior_gamma, H_gamma, gen_inits_gamma)
 }
 \references{
 Shapland, C.Y., et al., Profile-likelihood Bayesian model averaging for two-sample summary data Mendelian randomization in the presence of horizontal pleiotropy.

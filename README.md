@@ -15,6 +15,12 @@ The main function is `BESIDE_MR` to perform BayEsian Set IDEntification Mendelia
 
 `BESIDE_MR` returns an object of class `beside`, consists of the posterior of effect estimate, pleiotropy variance and instrument inclusion indicator variable from each iteration. As the estimation of variance is challenging, we have included `tau_estimate` with the options of `DL estimate` and `Full_Bayes`, where the former is a plug-in estimate for pleiotropy variance.
 
+## Update
+
+In August 2021, we have added a penalization term ($\eta$) within likelihood function of BESIDE-MR. The parameter $\eta$ dictates the size of models BMA explores the most. Setting a large positive $\eta$, the likelihood will increase
+with number of instruments, then BMA will favour models with many instruments. And hence for negative $\eta$, BMA will favour
+models with fewer instruments.
+
 ## Citation
 
 The corresponding paper can be accessed at:

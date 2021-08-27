@@ -496,7 +496,568 @@ randomS.initial.LI <- function(L, ins_prior) {
   return(Ind_L)
 }
 
-######################### Subfunctions that are used by BMA_MRanalysis() ###########################################
+#' BESIDE-MR fitting function with penalization term
+#'
+#' Sensitivity analysis that fits BESIDE-MR model with penalisation term (\eqn{\eta}) for number of instruments.
+#'
+#' @param tau_estimate Use DL estimate (="DL_approx") or Full Bayesian (="Full_Bayes") approach to analyse data.
+#' @param N_Beta one-parameter (=1) or two-parameter (=2) model.
+#' @param BetaXG Effect size for X-G association
+#' @param BetaYG Effect size for Y-G association
+#' @param seBetaXG Standard error for X-G association
+#' @param seBetaYG Standard error for Y-G association
+#' @param N_Ins Number of genetic instruments
+#' @param N_Iter Number of iterations
+#' @param Prior A list of hyper parameter for the prior distribution;\describe{
+#' \item{\code{$hyper_Beta_mean},\code{$hyper_Beta_sd}}{ONE PARAMETER MODEL: to specify mean (\code{_mean}) and
+#' standard deviation (\code{_sd}) respectively for the normally distributed \eqn{\beta}.}
+#' \item{\code{$hyper_Prec_shape}, \code{$hyper_Prec_rate}}{ONE PARAMETER MODEL with "Full_Bayes": to specify
+#' shape (\code{_shape}) and rate (\code{_rate}) for the gamma distribution of precision.}
+#' \item{\code{$Ins_prob}}{ONE PARAMETER MODEL: assign prior inclusion probability for each instrument.}
+#' \item{\code{$hyper_Beta1_mean},\code{$hyper_Beta1_sd},\code{$hyper_Beta2_mean},\code{$hyper_Beta2_sd}}{ONE PARAMETER
+#' MODEL: to specify mean and standard deviation for the normally distributed \eqn{\beta_1} and \eqn{\beta_2} respectively.}
+#' \item{\code{$hyper_Prec1_shape}, \code{$hyper_Prec1_rate}, \code{$hyper_Prec2_shape}, \code{$hyper_Prec2_rate}}{TWO
+#' PARAMETER MODEL with "Full_Bayes": to specify shape and rate for the gamma distribution of precision.}
+#' \item{\code{$Ins1_prob}, \code{$Ins2_prob}}{TWO PARAMETER MODEL: assign prior inclusion probability for each instrument in set 1 or set 2
+#' repectively.}
+#' }
+#' @param tuning_para Tuning parameter to ensure sufficient acceptance rate (recommended between 0.25 - 0.45);
+#' \describe{
+#' \item{\code{$Beta}}{ONE PARAMETER MODEL: for \eqn{\beta}.}
+#' \item{\code{$Prec_LL}, \code{$Prec_UL}, \code{$Prec_gap}}{ONE PARAMETER MODEL with "Full_Bayes": for the upper (\code{_UL}),
+#' lower (\code{_LL}) and gap (\code{_gap}) of the precision, this ensures symmetry between the new and the old value.}
+#' \item{\code{$Beta1}, \code{$Beta2}}{TWO PARAMETER MODEL: for \eqn{\beta_1} and \eqn{\beta_2} respectively.}
+#' \item{\code{$Prec1_LL}, \code{$Prec1_UL}, \code{$Prec1_gap}, \code{$Prec2_LL}, \code{$Prec2_UL}, \code{$Prec2_gap}}{TWO
+#' PARAMETER MODEL with "Full_Bayes": for the upper, lower and gap of the precision1 and precision2 respectively, this
+#' ensures symmetry between the new and the old value.}
+#' }
+#' @param gen_inits Initial values to start the iterations; \describe{
+#' \item{\code{$Beta}}{ONE PARAMETER MODEL: for \eqn{\beta}.}
+#' \item{\code{$UBPrec}, \code{$LBPrec}}{ONE PARAMETER MODEL with "Full_Bayes": for upper and lower limit of initial
+#' value of precision respectively.}
+#' \item{\code{$Ins_L}}{ONE PARAMETER MODEL: use \code{randomS.initial.LI()} to generate random initial model space.}
+#' \item{\code{$Beta1}, \code{$Beta2}}{TWO PARAMETER MODEL: for \eqn{\beta_1} and \eqn{\beta_2} respectively.}
+#' \item{\code{$UBPrec1}, \code{$LBPrec1}, \code{$UBPrec2}, \code{$LBPrec2}}{TWO
+#' PARAMETER MODEL with "Full_Bayes": or upper and lower limit of initial value of precision1 and precision2 respectively.}
+#' \item{\code{$Ins1_L}, \code{$Ins2_L}}{TWO PARAMETER MODEL: use randomS.initial.LI() generate random initial model space.}
+#' }
+#' @param Penal_NoInst Penalisation term for number of instruments, positive and negative value favours models with many
+#' and few instruments respectively. Two values must be specified for the two-parameter model.
+#' @return An object of class \code{"beside"} containing the following components:\describe{
+#' \item{\code{S}}{A matrix giving the results. ONE PARAMETER MODEL: columns gives sampled values of
+#' \eqn{\beta, \tau^2, I_1,...,I_L} for all iterations (rows). TWO PARAMETER MODEL: columns gives sampled values of
+#' \eqn{\beta_1, \beta_2, \tau_1^2, \tau_2^2, I_{11},...,I_{1L}, I_{21},...,I_{2L}} for all iterations (rows).}
+#' \item{\code{accept_rate}}{acceptance rate for each of the parameter from \code{S}.}
+#'}
+#'@author Chin Yang Shapland; Jack Bowden.
+#'@references Shapland, C.Y., et al., Profile-likelihood Bayesian model averaging for two-sample summary data Mendelian randomization in the presence of horizontal pleiotropy.
+#'@export
+#'@examples
+#'
+#' # load data
+#' data(AMD_HDL)
+#'
+#' # Prior choice for beta, tau and inclusion of instruments
+#' L<-nrow(AMD_HDL)
+#' Ins_prior<-rep(0.5, L)
+#' Prior_DL<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, Ins_prob=Ins_prior)
+#' Prior_gamma<-list(hyper_Beta_mean=0, hyper_Beta_sd=1, hyper_Prec_shape=2, hyper_Prec_rate=0.00005, Ins_prob=Ins_prior)
+#'
+#' # Tuning parameter for beta
+#' H_DL<-list(Beta=0.05)
+#' H_gamma<-list(Beta=0.05, Prec_LL=0, Prec_UL=1000000, Prec_gap=150000)
+#'
+#' # Generate initial values
+#' gen_inits_DL<-list(Beta=rnorm(1,0,10), Ins_L=randomS.initial.LI(L,Ins_prior))
+#' gen_inits_gamma<-list(Beta=rnorm(1,0,10), UBPrec=1000000, LBPrec=0, Ins_L=randomS.initial.LI(L,Ins_prior))
+#'
+#' # One-parameter model with penalisation parameter
+#' eta_sense<-5 # penalisation value which favours models with many instruments
+#' nIter<-50000
+#' #res_DL<-BMA_MRanalysis_InsPen("DL_approx",1, AMD_HDL$beta_XL.HDL.C, AMD_HDL$beta_amd, AMD_HDL$se_XL.HDL.C, AMD_HDL$se_amd, L, nIter, Prior_DL, H_DL, gen_inits_DL, eta_sense)
+#' #res_gamma<-BMA_MRanalysis_InsPen("Full_Bayes",1, AMD_HDL$beta_XL.HDL.C, AMD_HDL$beta_amd, AMD_HDL$se_XL.HDL.C, AMD_HDL$se_amd, L, nIter, Prior_gamma, H_gamma, gen_inits_gamma, eta_sense)
+
+BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seBetaYG, N_Ins, N_Iter, Prior, tuning_para,
+                                gen_inits, Noinst_pen){
+
+  if (tau_estimate=="DL_approx" & N_Beta==1 & length(Noinst_pen)==1){
+
+    #Generate initial values
+    Beta   <- gen_inits$Beta
+    Ins_L    <- gen_inits$Ins_L
+
+    # Saved space
+    S <- matrix(0,N_Iter,N_Ins+2)
+    classic_S <- matrix(0,N_Iter,3)
+    accept<-matrix(1,N_Iter,2)
+
+    for(i in 1:N_Iter) {
+      oldBeta   <- Beta
+      oldIns_L    <- Ins_L
+
+      #1st step: Compare likelihood for old and new Beta
+      Beta<-Beta + rnorm(1,0,tuning_para$Beta)
+      oldlogpost<-logpost_DL_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, oldBeta, oldIns_L, Prior$hyper_Beta_mean,
+                                    Prior$hyper_Beta_sd, Noinst_pen)
+      newlogpost<-logpost_DL_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, oldIns_L, Prior$hyper_Beta_mean,
+                                    Prior$hyper_Beta_sd, Noinst_pen)
+
+      logLL_beta<-newlogpost$logf
+
+      oldlp <- oldlogpost$logpost
+      newlp <- newlogpost$logpost
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Beta <- oldBeta          # fails so return to oldb
+        accept[i, 1] <- 0
+        logLL_beta <- oldlogpost$logf
+      }
+
+      #3nd step: Compare likelihood for old and new model space
+      Ins_L<-randomS.LI(Ins_L, N_Ins, Prior$Ins_prob)
+      oldlogpost<-logpost_DL_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, oldIns_L, Prior$hyper_Beta_mean, Prior$hyper_Beta_sd,
+                                    Noinst_pen)
+      newlogpost<-logpost_DL_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, Ins_L, Prior$hyper_Beta_mean, Prior$hyper_Beta_sd,
+                                    Noinst_pen)
+
+      logLL_IL<-newlogpost$logf
+      tausq_hat<-newlogpost$tausq
+      Qstat<-newlogpost$Q_stat
+
+      oldlp <- oldlogpost$logpost
+      newlp <- newlogpost$logpost
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Ins_L <- oldIns_L        # fails so return to oldIL
+        tausq_hat<-oldlogpost$tausq
+        accept[i, 2]<- 0
+        logLL_IL<-oldlogpost$logf
+        Qstat<-oldlogpost$Q_stat
+      }
+
+      S[i,] <- c(Beta, tausq_hat ,Ins_L)
+      classic_S[i,]<-c(logLL_beta, logLL_IL, Qstat)
+    }
+    returnlist<-list(S=S, accept_rate=apply(accept, 2, mean), classic_S=classic_S)
+    return(returnlist)
+  }
+
+  if (tau_estimate=="DL_approx" & N_Beta==2 & length(Noinst_pen)==2){
+
+    #BetaXG<-data$BetaXG
+    #BetaYG<-data$BetaYG
+    #seBetaXG<-data$seBetaXG
+    #seBetaYG<-data$seBetaYG
+    #N_Ins<-L
+    #N_Iter<-nIter
+    #Prior<-Prior_DL
+    #tuning_para<-H_DL
+    #gen_inits<-gen_inits_DL
+
+    #Generate initial values
+    Beta1  <- gen_inits$Beta1
+    Beta2  <- gen_inits$Beta2
+    Ins_L1 <- gen_inits$Ins_L1
+    Ins_L2 <- 1-Ins_L1
+
+    # Saved space
+    S      <- matrix(0,N_Iter,(N_Ins*2)+4)
+    classic_S <- matrix(0,N_Iter,6)
+    accept <- matrix(1,N_Iter,4)
+
+    for(i in 1:N_Iter) {
+      oldBeta1  <- Beta1
+      oldBeta2  <- Beta2
+      oldIns_L1 <- Ins_L1
+      oldIns_L2 <- Ins_L2
+
+      #1st step: Compare likelihood for old and new Beta1
+      Beta1<- Beta1 + rnorm(1,0,tuning_para$Beta1_h)
+      oldlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, oldBeta1, oldBeta2, oldIns_L1,
+                                           Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+
+      newlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, oldBeta2, oldIns_L1,
+                                           Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+
+      logLL_beta1<-newlogpost$logf
+
+      oldlp <- oldlogpost$logpost
+      newlp <- newlogpost$logpost
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Beta1 <- oldBeta1          # fails so return to oldb
+        accept[i, 1]<- 0
+        logLL_beta1<-oldlogpost$logf
+      }
+
+      #2nd step: Compare likelihood for old and new Beta2
+      Beta2<- Beta2 + rnorm(1,0,tuning_para$Beta2_h)
+      oldlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, oldBeta2, oldIns_L1,
+                                           Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+
+      newlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, oldIns_L1,
+                                           Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+
+      logLL_beta2<-newlogpost$logf
+
+      oldlp <- oldlogpost$logpost
+      newlp <- newlogpost$logpost
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Beta2 <- oldBeta2          # fails so return to oldb
+        accept[i, 2]<- 0
+        logLL_beta2<-oldlogpost$logf
+      }
+
+      #3rd step: Compare likelihood for old and new model space L1
+      Ins_L1<- randomS_cond.LI(Ins_L1, Ins_L2, N_Ins, Prior$Ins1_prob)
+
+      oldlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, oldIns_L1,
+                                           Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+
+      newlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Ins_L1,
+                                           Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+
+
+      logLL_IL1<-newlogpost$logf
+      tausq1_hat<-newlogpost$tausq1
+      Qstat1<-newlogpost$Q1_stat
+
+      oldlp <- oldlogpost$logpost
+      newlp <- newlogpost$logpost
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Ins_L1 <- oldIns_L1        # fails so return to oldIL
+        logLL_IL1<-oldlogpost$logf
+        tausq1_hat<-oldlogpost$tausq1
+        Qstat1<-oldlogpost$Q1_stat
+        accept[i, 3]<- 0
+
+      }
+
+      #4th step: Compare likelihood for old and new model space L2
+      Ins_L2<- randomS_cond.LI(Ins_L2, Ins_L1, N_Ins, Prior$Ins2_prob)
+
+      oldlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Ins_L1,
+                                           Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+
+      newlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Ins_L1,
+                                           Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, Ins_L2,
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+
+      logLL_IL2<-newlogpost$logf
+      tausq2_hat<-newlogpost$tausq2
+      Qstat2<-newlogpost$Q2_stat
+
+      oldlp <- oldlogpost$logpost
+      newlp <- newlogpost$logpost
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Ins_L2 <- oldIns_L2        # fails so return to oldIL
+        logLL_IL2<-oldlogpost$logf
+        tausq2_hat<-oldlogpost$tausq2
+        Qstat2<-oldlogpost$Q2_stat
+        accept[i, 4]<- 0
+      }
+
+      S[i,] <- c(Beta1, Beta2, tausq1_hat, tausq2_hat, Ins_L1, Ins_L2)
+      classic_S[i,]<-c(logLL_beta1, logLL_beta2, logLL_IL1, logLL_IL2, Qstat1, Qstat2)
+    }
+    returnlist<-list(S=S, classic_S=classic_S, accept_rate=apply(accept, 2, mean))
+    return(returnlist)
+  }
+
+  if (tau_estimate=="Full_Bayes" & N_Beta==1 & length(Noinst_pen)==1){
+
+    #Generate initial values
+    Beta   <- gen_inits$Beta
+    UBPrec <- gen_inits$UBPrec
+    LBPrec <- gen_inits$LBPrec
+    Prec   <- runif(1,LBPrec,UBPrec)
+    Ins_L    <- gen_inits$Ins_L
+
+    # Saved space
+    S <- matrix(0,N_Iter,N_Ins+2)
+    classic_S <- matrix(0,N_Iter,4)
+    accept<-matrix(1,N_Iter,3)
+
+    for(i in 1:N_Iter) {
+      oldBeta   <- Beta
+      oldPrec   <- Prec
+      oldUBPrec <- UBPrec
+      oldLBPrec <- LBPrec
+      oldIns_L    <- Ins_L
+
+      #1st step: Compare likelihood for old and new Beta
+      Beta<-Beta + rnorm(1,0,tuning_para$Beta)
+      oldlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, oldBeta, oldPrec, oldIns_L, Prior$hyper_Beta_mean,
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+      newlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, oldPrec, oldIns_L, Prior$hyper_Beta_mean,
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+
+      logLL_beta<-newlogpost$logf
+
+      oldlp <- oldlogpost$logpost+log(oldUBPrec-oldLBPrec)
+      newlp <- newlogpost$logpost+log(oldUBPrec-oldLBPrec)
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Beta <- oldBeta          # fails so return to oldb
+        accept[i, 1]<- 0
+        logLL_beta<-oldlogpost$logf
+      }
+
+      #2nd step: Compare likelihood for old and new tausq
+      UBPrec<-min(tuning_para$Prec_UL,Prec+tuning_para$Prec_gap)
+      LBPrec<-max(tuning_para$Prec_LL,Prec-tuning_para$Prec_gap)
+      Prec <- runif(1,LBPrec,UBPrec)
+      oldlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, oldPrec, oldIns_L, Prior$hyper_Beta_mean,
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+      newlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, Prec, oldIns_L, Prior$hyper_Beta_mean,
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+
+
+      logLL_tau<-newlogpost$logf
+
+      oldlp <- oldlogpost$logpost+log(UBPrec-LBPrec)
+      newlp <- newlogpost$logpost+log(oldUBPrec-oldLBPrec)
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Prec <- oldPrec          # fails so return to oldPrecsq
+        UBPrec <- oldUBPrec
+        LBPrec <- oldLBPrec
+        accept[i, 2]<- 0
+        logLL_tau<-oldlogpost$logf
+      }
+
+      #3nd step: Compare likelihood for old and new model space
+      Ins_L<-randomS.LI(Ins_L, N_Ins, Prior$Ins_prob)
+      oldlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, Prec, oldIns_L, Prior$hyper_Beta_mean,
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+      newlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, Prec, Ins_L, Prior$hyper_Beta_mean,
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+
+      logLL_IL<-newlogpost$logf
+      Qstat<-newlogpost$Q_stat
+
+      oldlp <- oldlogpost$logpost+log(UBPrec-LBPrec)
+      newlp <- newlogpost$logpost+log(UBPrec-LBPrec)
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Ins_L <- oldIns_L        # fails so return to oldIL
+        accept[i, 3]<- 0
+        logLL_IL<-oldlogpost$logf
+        Qstat<-oldlogpost$Q_stat
+      }
+      S[i,] <- c(Beta, 1/Prec ,Ins_L)
+      classic_S[i,]<-c(logLL_beta, logLL_tau, logLL_IL, Qstat)
+    }
+    returnlist<-list(S=S, accept_rate=apply(accept, 2, mean), classic_S=classic_S)
+    return(returnlist)
+  }
+
+  if (tau_estimate=="Full_Bayes" & N_Beta==2 & length(Noinst_pen)==2){
+
+    #Generate initial values
+    Beta1   <- gen_inits$Beta1
+    Beta2   <- gen_inits$Beta2
+
+    UBPrec1 <- gen_inits$UBPrec1
+    LBPrec1 <- gen_inits$LBPrec1
+    Prec1   <- runif(1,LBPrec1,UBPrec1)
+
+    UBPrec2 <- gen_inits$UBPrec2
+    LBPrec2 <- gen_inits$LBPrec2
+    Prec2   <- runif(1,LBPrec2,UBPrec2)
+
+    Ins_L1  <- gen_inits$Ins_L1
+    Ins_L2  <- 1-Ins_L1
+
+    # Saved space
+    S <- matrix(0,N_Iter,(N_Ins*2)+4)
+    classic_S <- matrix(0,N_Iter,8)
+    accept<-matrix(1,N_Iter,6)
+
+    for(i in 1:N_Iter) {
+      oldBeta1   <- Beta1
+      oldBeta2   <- Beta2
+
+      oldPrec1   <- Prec1
+      oldUBPrec1 <- UBPrec1
+      oldLBPrec1 <- LBPrec1
+
+      oldPrec2   <- Prec2
+      oldUBPrec2 <- UBPrec2
+      oldLBPrec2 <- LBPrec2
+
+      oldIns_L1  <- Ins_L1
+      oldIns_L2  <- Ins_L2
+
+      #1st step: Compare likelihood for old and new Beta1
+      Beta1<-Beta1 + rnorm(1,0,tuning_para$Beta1)
+
+      oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, oldBeta1, oldBeta2, oldPrec1, oldPrec2,
+                                                oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+
+      newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, oldBeta2, oldPrec1, oldPrec2,
+                                                oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+
+      logLL_beta1<-newlogpost$logf
+
+      oldlp <- oldlogpost$logpost + log(oldUBPrec1-oldLBPrec1) + log(oldUBPrec2-oldLBPrec2)
+      newlp <- newlogpost$logpost + log(oldUBPrec1-oldLBPrec1) + log(oldUBPrec2-oldLBPrec2)
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Beta1 <- oldBeta1          # fails so return to oldb
+        accept[i, 1]<- 0
+        logLL_beta1<-oldlogpost$logf
+      }
+
+      #2nd step: Compare likelihood for old and new Beta2
+      Beta2<-Beta2 + rnorm(1,0,tuning_para$Beta2)
+      oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, oldBeta2, oldPrec1, oldPrec2,
+                                                oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+
+      newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, oldPrec1, oldPrec2,
+                                                oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+
+      logLL_beta2<-newlogpost$logf
+
+      oldlp <- oldlogpost$logpost + log(oldUBPrec1-oldLBPrec1) + log(oldUBPrec2-oldLBPrec2)
+      newlp <- newlogpost$logpost + log(oldUBPrec1-oldLBPrec1) + log(oldUBPrec2-oldLBPrec2)
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Beta2 <- oldBeta2          # fails so return to oldb
+        accept[i, 2]<- 0
+        logLL_beta2<-oldlogpost$logf
+      }
+
+      #3rd step: Compare likelihood for old and new tausq1
+      UBPrec1<-min(tuning_para$Prec1_UL,Prec1+tuning_para$Prec1_gap)
+      LBPrec1<-max(tuning_para$Prec1_LL,Prec1-tuning_para$Prec1_gap)
+      Prec1 <- runif(1,LBPrec1,UBPrec1)
+      oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, oldPrec1, oldPrec2,
+                                                oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+
+      newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, oldPrec2,
+                                                oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+
+      logLL_tau1<-newlogpost$logf
+
+      oldlp <- oldlogpost$logpost + log(UBPrec1-LBPrec1) + log(oldUBPrec2-oldLBPrec2)
+      newlp <- newlogpost$logpost + log(oldUBPrec1-oldLBPrec1) + log(oldUBPrec2-oldLBPrec2)
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Prec1 <- oldPrec1          # fails so return to oldPrecsq
+        UBPrec1 <- oldUBPrec1
+        LBPrec1 <- oldLBPrec1
+        accept[i, 3]<- 0
+        logLL_tau1<-oldlogpost$logf
+      }
+
+      #4th step: Compare likelihood for old and new tausq2
+      UBPrec2<-min(tuning_para$Prec2_UL,Prec2+tuning_para$Prec2_gap)
+      LBPrec2<-max(tuning_para$Prec2_LL,Prec2-tuning_para$Prec2_gap)
+      Prec2 <- runif(1,LBPrec2,UBPrec2)
+      oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, oldPrec2,
+                                                oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+
+      newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, Prec2,
+                                                oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+
+      logLL_tau2<-newlogpost$logf
+
+      oldlp <- oldlogpost$logpost + log(UBPrec1-LBPrec1) + log(UBPrec2-LBPrec2)
+      newlp <- newlogpost$logpost + log(UBPrec1-LBPrec1) + log(oldUBPrec2-oldLBPrec2)
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Prec2 <- oldPrec2          # fails so return to oldPrecsq
+        UBPrec2 <- oldUBPrec2
+        LBPrec2 <- oldLBPrec2
+        accept[i, 4]<- 0
+        logLL_tau2<-oldlogpost$logf
+      }
+
+      #5th step: Compare likelihood for old and new model space L1
+      Ins_L1<- randomS_cond.LI(Ins_L1, Ins_L2, N_Ins, Prior$Ins1_prob)
+
+      oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, Prec2,
+                                                oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+
+      newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, Prec2,
+                                                Ins_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+      logLL_IL1<-newlogpost$logf
+      Qstat1<-newlogpost$Q1_stat
+
+      oldlp <- oldlogpost$logpost + log(UBPrec1-LBPrec1) + log(UBPrec2-LBPrec2)
+      newlp <- newlogpost$logpost + log(UBPrec1-LBPrec1) + log(UBPrec2-LBPrec2)
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Ins_L1 <- oldIns_L1       # fails so return to oldIL
+        accept[i, 5]<- 0
+        logLL_IL1<-oldlogpost$logf
+        Qstat1<-oldlogpost$Q1_stat
+      }
+
+      #6th step: Compare likelihood for old and new model space L2
+      Ins_L2<- randomS_cond.LI(Ins_L2, Ins_L1, N_Ins, Prior$Ins2_prob)
+
+      oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, Prec2,
+                                                Ins_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+
+      newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, Prec2,
+                                                Ins_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Ins_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+      logLL_IL2<-newlogpost$logf
+      Qstat2<-newlogpost$Q2_stat
+
+      oldlp <- oldlogpost$logpost + log(UBPrec1-LBPrec1) + log(UBPrec2-LBPrec2)
+      newlp <- newlogpost$logpost + log(UBPrec1-LBPrec1) + log(UBPrec2-LBPrec2)
+      if( log(runif(1,0,1)) > (newlp-oldlp) ) {
+        Ins_L2 <- oldIns_L2       # fails so return to oldIL
+        accept[i, 6]<- 0
+        logLL_IL2<-oldlogpost$logf
+        Qstat2<-oldlogpost$Q2_stat
+      }
+
+      S[i,] <- c(Beta1, Beta2, 1/Prec1, 1/Prec2 ,Ins_L1, Ins_L2)
+      classic_S[i,]<-c(logLL_beta1, logLL_beta2, logLL_tau1, logLL_tau2, logLL_IL1, logLL_IL2, Qstat1, Qstat2)
+    }
+
+    returnlist<-list(S=S, classic_S=classic_S, accept_rate=apply(accept, 2, mean))
+    return(returnlist)
+  }
+
+}
+
+######################### Subfunctions that are used by BMA_MRanalysis() #######################################################
 
 ### randomS.LI() ###
 #Generate random model space that doesn't produce empty and 1 variable model space
@@ -646,4 +1207,4 @@ logpost_2Beta_gammaTau<- function(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta1, Beta2,
 
   return(logpost=logpost)
 }
-#######################################################################################################################
+##############################################################################################################################

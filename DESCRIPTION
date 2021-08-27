@@ -1,6 +1,6 @@
 Package: BESIDEMR
 Title: BayEsian Set IDEntification Mendelian randomization
-Version: 1.1
+Version: 1.2
 Authors@R: c(person("Chin Yang", "Shapland", 
                 email = "chinyang.shapland@bristol.ac.uk", 
                 role = c("aut", "cre"),
