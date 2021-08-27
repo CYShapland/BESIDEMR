@@ -1,15 +1,20 @@
 Package: BESIDEMR
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: BayEsian Set IDEntification Mendelian randomization
+Version: 1.1
 Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    pc(person("Chin Yang", "Shapland", 
+                email = "chinyang.shapland@bristol.ac.uk", 
+                role = c("aut", "cre"),
+                comment = c(ORCID = "0000-0002-5797-1241")),
+              person("Qingyuan", "Zhao", 
+                email = "qingyzhao@gmail.com", 
+                role = c("aut")),
+              person("Jack", "Bowden", 
+                email = "j.bowden2@exeter.ac.uk", 
+                role = c("aut"),
+                comment = c(ORCID = "0000-0003-2628-3304")))
+Description: The R package to perform BayEsian Set IDEntification Mendelian randomization (BESIDE-MR).
+License: GPL v3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
