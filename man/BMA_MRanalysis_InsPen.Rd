@@ -16,7 +16,7 @@ BMA_MRanalysis_InsPen(
   Prior,
   tuning_para,
   gen_inits,
-  Noinst_pen
+  Penal_NoInst
 )
 }
 \arguments{
