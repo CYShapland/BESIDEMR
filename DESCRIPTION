@@ -13,6 +13,7 @@ Authors@R: c(person("Chin Yang", "Shapland",
                 role = c("aut"),
                 comment = c(ORCID = "0000-0003-2628-3304")))
 Description: The R package to perform BayEsian Set IDEntification Mendelian randomization (BESIDE-MR).
+Depends: R (>= 3.5)
 License: GPL v3
 Encoding: UTF-8
 LazyData: true
