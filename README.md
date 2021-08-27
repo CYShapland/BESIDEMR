@@ -17,7 +17,7 @@ The main function is `BESIDE_MR` to perform BayEsian Set IDEntification Mendelia
 
 ## Update
 
-In August 2021, we have added a penalization term (\eqn{\eta}) within likelihood function of BESIDE-MR. The parameter $\eta$ dictates the size of models BMA explores the most. Setting a large positive $\eta$, the likelihood will increase
+In August 2021, we have added a penalization term ($\eta$) within likelihood function of BESIDE-MR. The parameter $\eta$ dictates the size of models BMA explores the most. Setting a large positive $\eta$, the likelihood will increase
 with number of instruments, then BMA will favour models with many instruments. And hence for negative $\eta$, BMA will favour
 models with fewer instruments.
 

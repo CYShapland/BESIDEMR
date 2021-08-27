@@ -578,9 +578,9 @@ randomS.initial.LI <- function(L, ins_prior) {
 #' #res_gamma<-BMA_MRanalysis_InsPen("Full_Bayes",1, AMD_HDL$beta_XL.HDL.C, AMD_HDL$beta_amd, AMD_HDL$se_XL.HDL.C, AMD_HDL$se_amd, L, nIter, Prior_gamma, H_gamma, gen_inits_gamma, eta_sense)
 
 BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seBetaYG, N_Ins, N_Iter, Prior, tuning_para,
-                                gen_inits, Noinst_pen){
+                                gen_inits, Penal_NoInst){
 
-  if (tau_estimate=="DL_approx" & N_Beta==1 & length(Noinst_pen)==1){
+  if (tau_estimate=="DL_approx" & N_Beta==1 & length(Penal_NoInst)==1){
 
     #Generate initial values
     Beta   <- gen_inits$Beta
@@ -598,9 +598,9 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
       #1st step: Compare likelihood for old and new Beta
       Beta<-Beta + rnorm(1,0,tuning_para$Beta)
       oldlogpost<-logpost_DL_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, oldBeta, oldIns_L, Prior$hyper_Beta_mean,
-                                    Prior$hyper_Beta_sd, Noinst_pen)
+                                    Prior$hyper_Beta_sd, Penal_NoInst)
       newlogpost<-logpost_DL_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, oldIns_L, Prior$hyper_Beta_mean,
-                                    Prior$hyper_Beta_sd, Noinst_pen)
+                                    Prior$hyper_Beta_sd, Penal_NoInst)
 
       logLL_beta<-newlogpost$logf
 
@@ -615,9 +615,9 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
       #3nd step: Compare likelihood for old and new model space
       Ins_L<-randomS.LI(Ins_L, N_Ins, Prior$Ins_prob)
       oldlogpost<-logpost_DL_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, oldIns_L, Prior$hyper_Beta_mean, Prior$hyper_Beta_sd,
-                                    Noinst_pen)
+                                    Penal_NoInst)
       newlogpost<-logpost_DL_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, Ins_L, Prior$hyper_Beta_mean, Prior$hyper_Beta_sd,
-                                    Noinst_pen)
+                                    Penal_NoInst)
 
       logLL_IL<-newlogpost$logf
       tausq_hat<-newlogpost$tausq
@@ -640,7 +640,7 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
     return(returnlist)
   }
 
-  if (tau_estimate=="DL_approx" & N_Beta==2 & length(Noinst_pen)==2){
+  if (tau_estimate=="DL_approx" & N_Beta==2 & length(Penal_NoInst)==2){
 
     #BetaXG<-data$BetaXG
     #BetaYG<-data$BetaYG
@@ -673,11 +673,11 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
       Beta1<- Beta1 + rnorm(1,0,tuning_para$Beta1_h)
       oldlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, oldBeta1, oldBeta2, oldIns_L1,
                                            Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
-                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Penal_NoInst[1], Penal_NoInst[2])
 
       newlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, oldBeta2, oldIns_L1,
                                            Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
-                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Penal_NoInst[1], Penal_NoInst[2])
 
       logLL_beta1<-newlogpost$logf
 
@@ -693,11 +693,11 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
       Beta2<- Beta2 + rnorm(1,0,tuning_para$Beta2_h)
       oldlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, oldBeta2, oldIns_L1,
                                            Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
-                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Penal_NoInst[1], Penal_NoInst[2])
 
       newlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, oldIns_L1,
                                            Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
-                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Penal_NoInst[1], Penal_NoInst[2])
 
       logLL_beta2<-newlogpost$logf
 
@@ -714,11 +714,11 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
 
       oldlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, oldIns_L1,
                                            Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
-                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Penal_NoInst[1], Penal_NoInst[2])
 
       newlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Ins_L1,
                                            Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
-                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Penal_NoInst[1], Penal_NoInst[2])
 
 
       logLL_IL1<-newlogpost$logf
@@ -741,11 +741,11 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
 
       oldlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Ins_L1,
                                            Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, oldIns_L2,
-                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Penal_NoInst[1], Penal_NoInst[2])
 
       newlogpost<- logpost_2Beta_DL_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Ins_L1,
                                            Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd, Ins_L2,
-                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Noinst_pen[1], Noinst_pen[2])
+                                           Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd, Penal_NoInst[1], Penal_NoInst[2])
 
       logLL_IL2<-newlogpost$logf
       tausq2_hat<-newlogpost$tausq2
@@ -768,7 +768,7 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
     return(returnlist)
   }
 
-  if (tau_estimate=="Full_Bayes" & N_Beta==1 & length(Noinst_pen)==1){
+  if (tau_estimate=="Full_Bayes" & N_Beta==1 & length(Penal_NoInst)==1){
 
     #Generate initial values
     Beta   <- gen_inits$Beta
@@ -792,9 +792,9 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
       #1st step: Compare likelihood for old and new Beta
       Beta<-Beta + rnorm(1,0,tuning_para$Beta)
       oldlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, oldBeta, oldPrec, oldIns_L, Prior$hyper_Beta_mean,
-                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Penal_NoInst)
       newlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, oldPrec, oldIns_L, Prior$hyper_Beta_mean,
-                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Penal_NoInst)
 
       logLL_beta<-newlogpost$logf
 
@@ -811,9 +811,9 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
       LBPrec<-max(tuning_para$Prec_LL,Prec-tuning_para$Prec_gap)
       Prec <- runif(1,LBPrec,UBPrec)
       oldlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, oldPrec, oldIns_L, Prior$hyper_Beta_mean,
-                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Penal_NoInst)
       newlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, Prec, oldIns_L, Prior$hyper_Beta_mean,
-                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Penal_NoInst)
 
 
       logLL_tau<-newlogpost$logf
@@ -831,9 +831,9 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
       #3nd step: Compare likelihood for old and new model space
       Ins_L<-randomS.LI(Ins_L, N_Ins, Prior$Ins_prob)
       oldlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, Prec, oldIns_L, Prior$hyper_Beta_mean,
-                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Penal_NoInst)
       newlogpost<-logpost_gammaTau_InsPen(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, Prec, Ins_L, Prior$hyper_Beta_mean,
-                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Noinst_pen)
+                                          Prior$hyper_Beta_sd, Prior$hyper_Prec_shape, Prior$hyper_Prec_rate, Penal_NoInst)
 
       logLL_IL<-newlogpost$logf
       Qstat<-newlogpost$Q_stat
@@ -853,7 +853,7 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
     return(returnlist)
   }
 
-  if (tau_estimate=="Full_Bayes" & N_Beta==2 & length(Noinst_pen)==2){
+  if (tau_estimate=="Full_Bayes" & N_Beta==2 & length(Penal_NoInst)==2){
 
     #Generate initial values
     Beta1   <- gen_inits$Beta1
@@ -895,15 +895,15 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
 
       oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, oldBeta1, oldBeta2, oldPrec1, oldPrec2,
                                                 oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
 
       newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, oldBeta2, oldPrec1, oldPrec2,
                                                 oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
 
       logLL_beta1<-newlogpost$logf
 
@@ -919,15 +919,15 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
       Beta2<-Beta2 + rnorm(1,0,tuning_para$Beta2)
       oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, oldBeta2, oldPrec1, oldPrec2,
                                                 oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
 
       newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, oldPrec1, oldPrec2,
                                                 oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
 
       logLL_beta2<-newlogpost$logf
 
@@ -945,15 +945,15 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
       Prec1 <- runif(1,LBPrec1,UBPrec1)
       oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, oldPrec1, oldPrec2,
                                                 oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
 
       newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, oldPrec2,
                                                 oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
 
       logLL_tau1<-newlogpost$logf
 
@@ -973,15 +973,15 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
       Prec2 <- runif(1,LBPrec2,UBPrec2)
       oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, oldPrec2,
                                                 oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
 
       newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, Prec2,
                                                 oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
 
       logLL_tau2<-newlogpost$logf
 
@@ -1000,15 +1000,15 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
 
       oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, Prec2,
                                                 oldIns_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
 
       newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, Prec2,
                                                 Ins_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
       logLL_IL1<-newlogpost$logf
       Qstat1<-newlogpost$Q1_stat
 
@@ -1026,15 +1026,15 @@ BMA_MRanalysis_InsPen<-function(tau_estimate, N_Beta, BetaXG,BetaYG,seBetaXG,seB
 
       oldlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, Prec2,
                                                 Ins_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 oldIns_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
 
       newlogpost<-logpost_2Beta_gammaTau_InsPen(BetaXG, BetaYG, seBetaXG, seBetaYG, Beta1, Beta2, Prec1, Prec2,
                                                 Ins_L1, Prior$hyper_Beta1_mean, Prior$hyper_Beta1_sd,
-                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Noinst_pen[1],
+                                                Prior$hyper_Prec1_shape, Prior$hyper_Prec1_rate, Penal_NoInst[1],
                                                 Ins_L2, Prior$hyper_Beta2_mean, Prior$hyper_Beta2_sd,
-                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Noinst_pen[2])
+                                                Prior$hyper_Prec2_shape, Prior$hyper_Prec2_rate, Penal_NoInst[2])
       logLL_IL2<-newlogpost$logf
       Qstat2<-newlogpost$Q2_stat
 
