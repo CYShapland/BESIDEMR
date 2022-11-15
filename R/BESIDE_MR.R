@@ -1130,6 +1130,29 @@ logpost_DL <- function(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, indicator, hyper_B
   return(list(tausq=tausq, logpost=logpost))
 }
 
+logpost_DL_InsPen <- function(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, indicator, hyper_Beta_mean, hyper_Beta_sd, eta) {
+
+  BetaXG_sub   <-BetaXG[which(indicator==1)]
+  BetaYG_sub   <-BetaYG[which(indicator==1)]
+  seBetaXG_sub <-seBetaXG[which(indicator==1)]
+  seBetaYG_sub <-seBetaYG[which(indicator==1)]
+
+  BIV    = BetaYG_sub/BetaXG_sub
+  se.BIV = sqrt((seBetaYG_sub^2)/BetaXG_sub^2)
+  Tau_cal <- DL(BIV,se.BIV)
+  tausq <- Tau_cal$tausq.hat
+  Q_stat <- Tau_cal$Q
+
+  logf = -0.5*sum(indicator)*log(2*pi) +
+    (-0.5*sum(log(seBetaYG_sub^2+tausq) +
+                ((BetaYG_sub-(Beta*BetaXG_sub))^2/(Beta^2*seBetaXG_sub^2+seBetaYG_sub^2+tausq)))) +
+    (sum(indicator)*eta)
+
+  logpost = logf + dnorm(Beta, hyper_Beta_mean, hyper_Beta_sd, log=T)
+
+  return(list(logf=logf, tausq=tausq, Q_stat=Q_stat, logpost=logpost))
+}
+
 ### logpost_2Beta_DL() ###
 #Calculate the log posterior for the 2 parameter model with hyper parameters option and
 #where tau is approximate from DL()
@@ -1157,6 +1180,36 @@ logpost_2Beta_DL <- function(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta1, Beta2, indi
   return(list(tausq1=tausq1, tausq2=tausq2, logpost=logpost))
 }
 
+logpost_2Beta_DL_InsPen <- function(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta1, Beta2, indicator1, hyper_Beta1_mean,
+                                    hyper_Beta1_sd, indicator2, hyper_Beta2_mean, hyper_Beta2_sd, eta1, eta2) {
+
+  # Estimating tau from DL
+  BIV    = BetaYG/BetaXG
+  se.BIV = sqrt((seBetaYG^2)/BetaXG^2)
+  Tau1_cal <- DL(BIV[which(indicator1==1)],se.BIV[which(indicator1==1)])
+  Tau2_cal <- DL(BIV[which(indicator2==1)],se.BIV[which(indicator2==1)])
+  tausq1 <- Tau1_cal$tausq.hat
+  tausq2 <- Tau2_cal$tausq.hat
+  Q1_stat <- Tau1_cal$Q
+  Q2_stat <- Tau2_cal$Q
+
+  # Weighting for the likelihood for each instrument. this allows independent probability of instrument inclusion
+  w1<-ifelse(indicator1==0 & indicator2==0, 0, indicator1/(indicator1+indicator2))
+  w2<-ifelse(indicator1==0 & indicator2==0, 0, indicator2/(indicator1+indicator2))
+
+  logf = (-0.5*sum(indicator1*w1)*log(2*pi)) + (-0.5*sum(indicator1*w1*(log(seBetaYG^2+tausq1) +
+                                                                          ((BetaYG-(Beta1*BetaXG))^2/(Beta1^2*seBetaXG^2+seBetaYG^2+tausq1))))) +       # log likelihood for beta1
+    (sum(indicator1*w1)*eta1) +                                                   # model penalisation for beta1
+    (-0.5*sum(indicator2*w2)*log(2*pi)) + (-0.5*sum(indicator2*w2*(log(seBetaYG^2+tausq2) +
+                                                                     ((BetaYG-(Beta2*BetaXG))^2/(Beta2^2*seBetaXG^2+seBetaYG^2+tausq2))))) +       # log likelihood for beta2
+    (sum(indicator2*w2)*eta2)                                                     # model penalisation for beta2
+
+  logpost = logf + dnorm(Beta1, hyper_Beta1_mean, hyper_Beta1_sd, log=T) +             # priors in beta1
+    dnorm(Beta2, hyper_Beta2_mean, hyper_Beta2_sd, log=T)                     # priors in beta2
+
+  return(list(logf=logf, tausq1=tausq1, tausq2=tausq2, Q1_stat=Q1_stat, Q2_stat=Q2_stat, logpost=logpost))
+}
+
 
 ### logpost_gammaTau() ###
 #Calculate the log posterior with hyper parameters option
@@ -1179,6 +1232,33 @@ logpost_gammaTau <- function(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, Prec, indica
             dgamma(Prec, shape=hyper_Prec_shape, rate=hyper_Prec_rate, log=T)                   #priors in tau
 
   return(logpost=logpost)
+}
+
+logpost_gammaTau_InsPen <- function(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta, Prec, indicator, hyper_Beta_mean, hyper_Beta_sd,
+                                    hyper_Prec_shape, hyper_Prec_rate, eta) {
+
+  BetaXG_sub   <-BetaXG[which(indicator==1)]
+  BetaYG_sub   <-BetaYG[which(indicator==1)]
+  seBetaXG_sub <-seBetaXG[which(indicator==1)]
+  seBetaYG_sub <-seBetaYG[which(indicator==1)]
+
+  BIV    = BetaYG_sub/BetaXG_sub
+  se.BIV = sqrt((seBetaYG_sub^2)/BetaXG_sub^2)
+  Tau_cal <- DL(BIV,se.BIV)
+  Q_stat <- Tau_cal$Q
+
+  Tausq<-1/Prec
+
+  logf = -0.5*sum(indicator)*log(2*pi) +
+    (-0.5*sum(log(seBetaYG_sub^2+Tausq) +
+                ((BetaYG_sub-(Beta*BetaXG_sub))^2/(Beta^2*seBetaXG_sub^2+seBetaYG_sub^2+Tausq)))) +
+    (sum(indicator)*eta)
+
+  logpost = logf + dnorm(Beta, hyper_Beta_mean, hyper_Beta_sd, log=T) +    # priors in Beta
+    dgamma(Prec, shape=hyper_Prec_shape, rate=hyper_Prec_rate, log=T)               # priors in tau
+
+
+  return(list(logf=logf, Q_stat=Q_stat, logpost=logpost))
 }
 
 ### logpost_2Beta_gammaTau() ###
@@ -1207,4 +1287,39 @@ logpost_2Beta_gammaTau<- function(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta1, Beta2,
 
   return(logpost=logpost)
 }
+
+logpost_2Beta_gammaTau_InsPen<- function(BetaXG,BetaYG,seBetaXG,seBetaYG, Beta1, Beta2, Prec1, Prec2,
+                                         indicator1, hyper_Beta1_mean, hyper_Beta1_sd, hyper_Prec1_shape, hyper_Prec1_rate, eta1,
+                                         indicator2, hyper_Beta2_mean, hyper_Beta2_sd, hyper_Prec2_shape, hyper_Prec2_rate, eta2) {
+
+  # Estimating tau from DL
+  BIV    = BetaYG/BetaXG
+  se.BIV = sqrt((seBetaYG^2)/BetaXG^2)
+  Tau1_cal <- DL(BIV[which(indicator1==1)],se.BIV[which(indicator1==1)])
+  Tau2_cal <- DL(BIV[which(indicator2==1)],se.BIV[which(indicator2==1)])
+  Q1_stat <- Tau1_cal$Q
+  Q2_stat <- Tau2_cal$Q
+
+  Tausq1<-1/Prec1
+  Tausq2<-1/Prec2
+
+  # Weighting for the likelihood for each instrument. this allows independent probability of instrument inclusion
+  w1<-ifelse(indicator1==0 & indicator2==0, 0, indicator1/(indicator1+indicator2))
+  w2<-ifelse(indicator1==0 & indicator2==0, 0, indicator2/(indicator1+indicator2))
+
+  logf = (-0.5*sum(indicator1*w1)*log(2*pi)) + (-0.5*sum(indicator1*w1*(log(seBetaYG^2+Tausq1) +
+                                                                          ((BetaYG-(Beta1*BetaXG))^2/(Beta1^2*seBetaXG^2+seBetaYG^2+Tausq1))))) +           # log likelihood
+    (sum(indicator1*w1)*eta1) +                                                       # model penalisation for beta1
+    (-0.5*sum(indicator2*w2)*log(2*pi)) + (-0.5*sum(indicator2*w2*(log(seBetaYG^2+Tausq2) +
+                                                                     ((BetaYG-(Beta2*BetaXG))^2/(Beta2^2*seBetaXG^2+seBetaYG^2+Tausq2))))) +           # log likelihood
+    (sum(indicator2*w2)*eta2)                                                         # model penalisation for beta2
+
+  logpost = logf + dnorm(Beta1, hyper_Beta1_mean, hyper_Beta1_sd, log=T) +                     # priors in Beta1
+    dgamma(Prec1, shape=hyper_Prec1_shape, rate=hyper_Prec1_rate, log=T) +            # priors in tau1
+    dnorm(Beta2, hyper_Beta2_mean, hyper_Beta2_sd, log=T) +                           # priors in Beta2
+    dgamma(Prec2, shape=hyper_Prec2_shape, rate=hyper_Prec2_rate, log=T)              # priors in tau2
+
+  return(list(logf=logf, Q1_stat=Q1_stat, Q2_stat=Q2_stat, logpost=logpost))
+}
+
 ##############################################################################################################################
